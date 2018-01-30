@@ -1,0 +1,395 @@
+---
+title: ' Crimes in Chicago - A Predictive Approach'
+author: By Rushiraj Nenuji,Nischitha Krishna, Chandan Ramanna, Santhosh Kumar Ravindran
+  and Yin Yang
+date: "March 5, 2017"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+subtitle: Milestone 2 - Data Analysis I
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Introduction
+
+Crime in Chicago has been tracked by the Chicago Police Department's Bureau of Records since the beginning of the 20th century. The city's overall crime rate, especially the violent crime rate, is substantially higher than the US average. Chicago was responsible for nearly half of 2016's increase in homicides in the US, though national crime rates stayed near historic lows. As of 2017, Chicago's homicide rate is significantly higher when compared to the larger American cities of New York and Los Angeles.
+
+August 2016 marked the most violent month Chicago had recorded in over two decades with 92 murders, included the murder of Nykea Aldridge, cousin of NBA star Dwyane Wade. By September 2016, Chicago had reached 500 people murdered and 3,000 people shot, surpassing totals for all of 2015 in just 9 months. By October 2016, Chicago had surpassed 600 homicides and over 2,800 people shot, marking a 32 percent increase in murders and non-fatal shootings compared to 2015. October 2016 was the second deadliest month in 2016 with 78 homicides; more than double the 31 homicides of October 2015. On December 1, 2016, Chicago recorded its 700th homicide for the year.Chicago's 2016 murder and shooting surge has attracted national media attention from CNN, The New York Times, USA Today, Time Magazine and PBS. Filmmaker Spike Lee's 2015 release, Chi-Raq, highlights Chicago's gun violence using a narrative inspired by the Greek comedy Lysistrata.
+
+Keeping these concerns in mind, we have leveraged the dataset  to analyse and perform prediction on crime events (except the murder cases) that occurred in the City of Chicago from 2001 to present. The data resource is from Chicago Police Department's CLEAR (Citizen Law Enforcement Analysis and Reporting) system. 
+For our project, We have  6280886 millions of the data records. It will include 22 variables, such as 
+
+"ID" 
+"Case.Number"
+"Date"
+"Block"
+"IUCR" 
+"Primary.Type" 
+"Description" 
+"Location.Description"
+"Arrest" 
+"Domestic"
+"Beat"
+"District"
+"Ward"
+"Community.Area"
+"FBI.Code"
+"X.Coordinate"
+"Y.Coordinate"
+"Year"
+"Updated.On"
+"Latitude"
+Longitude"
+"Location"
+
+In order to protect the privacy of crime victims, addresses are shown at the block level only and specific locations are not identified. The list of crime even events are 
+
+"THEFT"                                         "BATTERY"                          
+"ROBBERY"                                       "CRIMINAL DAMAGE"                  
+"DECEPTIVE PRACTICE"                            "NARCOTICS"                        
+"ASSAULT"                                       "OTHER OFFENSE"                    
+"CRIMINAL TRESPASS"                             "GAMBLING"                         
+"ARSON"                                         "BURGLARY"                         
+"PROSTITUTION"                                  "MOTOR VEHICLE THEFT"              
+"WEAPONS VIOLATION"                             "HOMICIDE"                         
+"OFFENSE INVOLVING CHILDREN"                    "CRIM SEXUAL ASSAULT"              
+"SEX OFFENSE"                                   "LIQUOR LAW VIOLATION"             
+"INTERFERENCE WITH PUBLIC OFFICER"              "KIDNAPPING"                       
+"PUBLIC PEACE VIOLATION"                        "INTIMIDATION"                     
+"STALKING"                                      "PUBLIC INDECENCY"                 
+"RITUALISM"                                     "OTHER NARCOTIC VIOLATION"         
+"OBSCENITY"                                     "NON-CRIMINAL"                     
+"CONCEALED CARRY LICENSE VIOLATION"             "HUMAN TRAFFICKING"                
+"NON-CRIMINAL (SUBJECT SPECIFIED)"              "NON - CRIMINAL"                   
+"DOMESTIC VIOLENCE"
+
+
+We wanted to delve deeper into this statistic, properly detect outliers and deal with missing values in our dataset. Using 10 professional graphs to analysis the dataset. and using predictive analytics to solve some classification and prediction problems on our dataset. And solving some question: 
+
+
+# 	Data Source and Collection 
+
+. The data set for analyzing Chicago crimes is obtained from City of Chicago official site. 
+
+. The City of Chicago's Data Portal is dedicated to promoting access to government data and encouraging the development of   creative tools to engage and serve Chicago's diverse community. The site hosts over 200 datasets presented in easy-to-use   formats about City departments, services, facilities and performance.
+
+. Below is the link which redirects to the above mentioned site.
+
+
+[https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2](https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2)
+
+
+
+# Data Set Manipulation
+
+## Cleaning up the environment by removing all the elements in env
+
+```{r}
+rm(list = ls())
+```
+
+## We require to load these packages before we start generating graphs
+```{r}
+library(ggmap)
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(plotly)
+```
+## Importing the Data set csv file into R environment using read.csv and creating a data frame.
+
+```{r}
+
+crimedf <- read.csv(file = "Crimes_in_Chicago.csv", stringsAsFactors = FALSE)
+df5 <- read.csv(file = "Last5Years.csv", stringsAsFactors = FALSE)
+crime.data <- read.csv(file = "CrimesCleansed.csv", stringsAsFactors = FALSE)
+```
+
+
+## Structure of the Data set
+
+```{r }
+
+str(crimedf)
+``` 
+
+## Summary of the Data set
+
+```{r }
+
+summary(crimedf)
+```
+
+## Clean the DATA-SET, removing missing data
+
+```{r}
+
+nacrimedf <- na.omit(crimedf)
+```
+
+## Plotting 10 Graphs
+
+## Graph 1. Trend line depicting Number of Crimes per year (2001 to Present) (Crime versus Year)
+
+
+```{r}
+
+Id_count <- crimedf %>% 
+  group_by(Year) %>%
+  dplyr :: summarize(count = n()) 
+
+p <- plot_ly(labels = ~Id_count$Year, Values = ~Id_count$count)
+  
+ggplot(Id_count, aes(x=Year,  y=  count/1000, label = count) )+geom_point(size = 2.5,color = "red")+geom_line(size=1.5,color= "blue") + xlab ( "Year in which Crime occured")+ ylab ("Number of Crimes (in Thousands)")+ggtitle ("Number of Crimes occured from 2001 to Present") +geom_text(size=3, hjust = 1, vjust = 1)
+
+```
+
+## Interpretation on Graph 1
+
+The Graph Describes Total Number of Crimes occured in Chicago from 2001 to present (2017). The analysis enables the Chicago Police Department's Bureau to understand the percentage increase or decrease of crimes over years. This trend line shows that the crime count is gradually reducing and at 2017, as of today we see that only 36540 was found.
+
+# Graph 2. - Interactive Donut Chart to describe Percentage of different types of crime
+
+```{r}
+ crimedf %>%
+  group_by(Primary.Type) %>%
+  dplyr :: summarize(count = n()) %>%
+  plot_ly(labels = ~Primary.Type, values = ~count) %>%
+  add_pie(hole = 0.7) %>%
+  layout(  showlegend = T,
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+```
+## Interpretation on Graph 2
+
+
+This is a donut graph which shows up Percentage of crime for each type of crime. here are 37 types of crime cases. This information will help Chicago Police to make a decision on which of the crime is occuring frequently and also to take more precation towards that particular crime and reduce it in future. 
+
+
+# Graph 3. - Crime Rate in Chicago on Map
+
+```{r}
+library(ggmap)
+chicago <- get_map(location = 'chicago', zoom = 11)
+map.chicago <- ggmap(chicago)
+map.chicago +
+  geom_point(data=crimedf, aes(x=crimedf$Longitude, y=crimedf$Latitude), color="orange", alpha=.03, size=1.1) 
+
+```
+# Interpretation of Graph 3
+This map graph shows areas where crimes have occured. Crime can be any of these 
+"THEFT"                                         "BATTERY"                          
+"ROBBERY"                                       "CRIMINAL DAMAGE"                  
+"DECEPTIVE PRACTICE"                            "NARCOTICS"                        
+"ASSAULT"                                       "OTHER OFFENSE"                    
+"CRIMINAL TRESPASS"                             "GAMBLING"                         
+"ARSON"                                         "BURGLARY"                         
+"PROSTITUTION"                                  "MOTOR VEHICLE THEFT"              
+"WEAPONS VIOLATION"                             "HOMICIDE"                         
+"OFFENSE INVOLVING CHILDREN"                    "CRIM SEXUAL ASSAULT"              
+"SEX OFFENSE"                                   "LIQUOR LAW VIOLATION"             
+"INTERFERENCE WITH PUBLIC OFFICER"              "KIDNAPPING"                       
+"PUBLIC PEACE VIOLATION"                        "INTIMIDATION"                     
+"STALKING"                                      "PUBLIC INDECENCY"                 
+"RITUALISM"                                     "OTHER NARCOTIC VIOLATION"         
+"OBSCENITY"                                     "NON-CRIMINAL"                     
+"CONCEALED CARRY LICENSE VIOLATION"             "HUMAN TRAFFICKING"                
+"NON-CRIMINAL (SUBJECT SPECIFIED)"              "NON - CRIMINAL"                   
+"DOMESTIC VIOLENCE"
+
+# Graph 4 Crime Types versus Rate
+
+```{r}
+library(magrittr)
+library(dplyr)
+Crimes_Arrested_By_Type <- crimedf %>% group_by(Primary.Type) %>% dplyr:: summarise(arrest_count = n())  
+
+Crimes_Arrested_By_Type <- data.frame (Crimes_Arrested_By_Type)
+Crimes_Arrested_By_Type<-Crimes_Arrested_By_Type[order(Crimes_Arrested_By_Type$arrest_count , decreasing = T),]
+
+
+Crime_Based_Layout <- data.frame(head(Crimes_Arrested_By_Type,5))
+
+library(ggplot2)
+ggplot(data= Crime_Based_Layout, mapping =  aes(x= Primary.Type,y= arrest_count)) + geom_bar(stat="identity",position = position_dodge(),aes(fill = Primary.Type))+
+ggtitle("Distribution of Crimes grouped by Top 5 Major types of crimes")+
+labs(x="Primary Type", y = "Number of Crimes" )+
+theme(axis.text.x=element_text(angle=45,hjust=1.0,vjust=1.0))
+```
+# Interpretation on Graph 4
+The graph shows up how many number of cases have occured  for each type of crime. There are 37 types of crime cases. The visualization shows top 5 most occuring crime in Chicago.This information will help Chicago Police to make a decision on which of the crime is occuring frequently and also to take more precaution towards that particular crime and reduce it in future. 
+
+
+# Graph 5 - Top five crimes in chicago from 2001 to present
+
+```{r}
+data2 <- cbind(crimedf,quantity=seq(1,1,nrow(crimedf)))
+aggdata2 <- aggregate(quantity~Year+Primary.Type,data=data2,FUN=sum)
+aggdata3 <- aggregate(quantity~Primary.Type, data=aggdata2,FUN=mean)
+aggdata3 <- aggdata3[order(aggdata3$quantity,decreasing=TRUE),]
+top5 <- aggdata3[1:5,]
+subaggdata2 <- aggdata2[which(aggdata2$Primary.Type %in% top5$Primary.Type),]
+options(scipen=999)
+library(ggplot2)
+ggplot(data=subaggdata2,aes(x=Year,y=quantity)) + facet_grid(.~Primary.Type) + geom_point(aes(size=2,col=quantity)) + geom_line(aes(group=1, col=quantity)) + ggtitle("Change of the top 5 crimes in Chicago from 2001-2017") + xlab("Year") + ylab("Total Occurrence")
+
+```
+
+
+# Interpretation on Graph 5
+This graph is plotted to understand which are the top 5 crimes more frequently occuring in chicago. Once we understand this, we try to analyse how does these crimes change over time 2001 to 2017.From the graph we see that theft crimes and battery crimes are occuring more frequently.
+
+
+# Graph 6(a)  -  Top 10 most dangerous communities from 2001 - present
+```{r}
+areadata <- data2[which(data2$Community.Area!= ""),]
+areaMissRatio <- 1 - nrow(areadata)/nrow(nacrimedf)
+areaMissRatio
+aggdata_area <- aggregate(quantity~Year+Community.Area,data=areadata,FUN=sum)
+aggdata_area2 <- aggregate(quantity~Community.Area,data=aggdata_area,FUN=sum)
+aggdata_area2 <- aggdata_area2[order(aggdata_area2$quantity,decreasing=TRUE),]
+top10_area <- aggdata_area2[1:10,]
+with(top10_area,barplot(top10_area$quantity,col=c("violet","purple","blue","green","yellow","orange","red","lightblue","mistyrose","lightcyan"),main="The top ten most dangerous community areas in Chicago", xlab="Community area",ylab="Total crime occurrence from 2001-2017"))
+legend("topright",lty="solid",col=c("violet","purple","blue","green","yellow","orange","red","lightblue","mistyrose","lightcyan"),legend=top10_area$Community.Area)
+top10_area <- aggdata_area2[1:10,]
+top10_area
+
+```
+
+# Graph 6(b)  -  Trend for top 5 most dangerous communities based on crimes.
+```{r}
+top3_area <- aggdata_area2[1:5,]
+subaggdata_area2 <- aggdata_area[which(aggdata_area$Community.Area %in% top3_area$Community.Area),]
+ggplot(data=subaggdata_area2,aes(x=Year,y=quantity)) + facet_grid(.~Community.Area) + geom_point(aes(size=2,col=quantity)) + geom_line(aes(group=1, col=quantity)) + ggtitle("Change of the top 5 most dangerous communities") + xlab("Year") + ylab("Total Occurrence")
+```
+
+
+# Interpretation of Graph 6 - 6a and 6b
+
+Graph 6(A) represents the top ten most dangerous community areas in Chicago based on the crime occurrence from 2001-2017. This gives the user a brief overview of what community needs more attention. Graph 6(B) is a more drilled version of graph 6(A), where the trend for the graph 6(A) is shown over time. This trend can be helpful for the lawmakers and the law enforcement agents in predecting the crimes and securing the commumity areas that need more attention.
+
+
+
+
+# Graph 7 Heat map, representing the crimes by the time of the day.
+```{r}
+library(dplyr)
+
+temp <- aggregate(crime.data$crime, by = list(crime.data$crime,crime.data$time.tag), FUN = length)
+names(temp) <- c("crime", "time.tag", "count")
+
+
+ggplot(temp, aes(x = crime, y = factor(time.tag))) +
+  geom_tile(aes(fill = count)) +
+  scale_x_discrete("Crime", expand  = c(0,0)) +
+  scale_y_discrete("Time of day", expand  = c(0,-2))  +
+  scale_fill_gradient("Number of crimes", low=  "white", high  = "steelblue")+
+  theme_bw() + ggtitle("Crimes by time of day") +
+  theme(panel.grid.major  = element_line(colour  = NA), panel.grid.minor  = element_line (colour  = NA))+
+  theme(axis.text.x = element_text(angle = 30))
+```
+
+# Interpretation of graph 7
+The heat map of the crimes based on the time of the day represents the number of crimes. The higher variant of the steelblue color represnts more number of crimes for that specific time domain. So, it can be interpreted that the crime category "theft" occurs more frequently during the time domain 12 - 18. In the subsequent graphs we will try to integrate the community area (i.e. the exact location from the dataset).
+
+
+# Graph 8
+
+```{r}
+library(dplyr)
+df5$Date <- NULL
+Crime_Location <- df5 %>% group_by(Community.Area,crime,time.tag) %>% dplyr::summarise(countt = n())  
+Crime_Location<-Crime_Location[order(-Crime_Location$countt),]
+
+ggplot(Crime_Location, aes(x = Community.Area, y = time.tag)) +
+    geom_point(aes(size = countt/1000, alpha=.02)) +
+    scale_size(range = c(1,15)) + ggtitle ("Count of crimes by Community Area and Time")+labs(x="Community Area of the Crime", y ="Time of the Day")
+```
+
+
+# Interpretation of graph 8
+The above graph represents the occurance of crime based on the time interval and the community area (i.e. location). We can further improvise the visualization by adding the type of crime along with the factors considered in the above graph.
+
+
+
+# Graph 9 Bubble graph for visualization of the factors : Place, Time, Rate (# of crimes) and Type of Crimes.
+
+```{r}
+library(dplyr)
+df5$Date <- NULL
+Crime_Location <- df5 %>% group_by(Community.Area,crime,time.tag) %>% dplyr::summarise(countt = n())  
+Crime_Location<-Crime_Location[order(-Crime_Location$countt),]
+
+
+
+Crime_Location
+ggplot(Crime_Location, aes(x = Community.Area, y = time.tag, label = crime)) +
+    geom_point(aes(size = countt/1000, colour = crime, alpha=.02)) + 
+    geom_text(hjust = 1, size = 2) +
+    scale_size(range = c(1,15)) +
+    theme(axis.text.x=element_text(angle=90,hjust=1.0,vjust=1.0)) + ggtitle ("Count of crimes by Community Area and Time")+labs(x="Community Area of the Crime", y ="Time of the Day")
+```
+
+
+# Interpretation of graph 9
+The above graph, represents the types of crime, the rate of crime(i.e. # of crimes), the time interval and the community area. For the descision makers this graph serves as an important factor. The graph shows significant intensity of the crimes between the interval of the communities from 20 to 30. Our previous graphs 6(A) and 6(B) indicates that the community that suffers maximum crime is the community area 25. On further analytics, the time intervals and the types of crime play an important role.
+
+
+
+
+# Summary
+In the first level of analysis, we tried to understand the overall trend of the Crimes in Chicago since 2001- Present under various factors. The first three graphs we analyze the increase and decrease of the number of crimes based on the Community Area and the type of crimes and the time of the day. 
+By understanding these trends we try to drill down the data and focus on the comparison of the number of crimes based on the type of crime, community area and the time of the day. 
+Reason for choosing Community Area
+
+The City of Chicago is divided into different community areas which gives us a better understanding of which part of the city has more crime rates.
+
+Reason for choosing Types of Crimes
+
+The types of crimes give us a better understanding to analyze the different types of crimes that have been committed in the past in the City of Chicago.
+
+Reason for choosing Time of the Day  
+On analyzing the time of the day, we could drill deep into the particular time of the day a crime has been committed. 
+
+So in the final analysis of the graphs 
+We analyze the number of crimes that have occurred in the last five years in the city of Chicago based on the time of the day and the type of the crime.
+Through this we the police department would be able to predict possible crime that a person is vulnerable at a particular time of the day in a specific community area of the city.
+
+
+# STORY!!
+This dataset reflects reported incidents of crime (with the exception of murders where data exists for each victim) that occurred in the City of Chicago from 2001 to Present.
+
+The Crime category includes:
+1.	Arson
+2.	Criminal Sexual Assault
+3.	Criminal Trespassing
+4.	Deceptive Practice
+5.	Domestic Violence
+6.	Gambling
+7.	Homicide
+8.	Interfere with Public Officer
+9.	Intimidation
+10.	Kidnapping
+11.	Liquor Law Violation
+12.	Obsenity
+13.	Offences involving Children
+14.	Other Narcotic Violation
+15.	Prostitution
+16.	Public Indecency
+17.	Public Peach Violation
+18.	Ritualism
+19.	Sex Offence
+20.	Stalking
+21.	Weapons Violation
+The crime data provides us the information about the type of crime happened at any time at various locality, also, the time of crime. With the given crime data set, we cleansed based on the requirement. Various, similar, crime type have been considered under the same categories. 
+
+Based on the data that has been considered we would propose to predict the crime, most likely, to be happened at any particular locality and at the time of the day. 
+
+
+

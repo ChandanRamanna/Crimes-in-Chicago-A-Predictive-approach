@@ -1,0 +1,97 @@
+---
+title: "Milestone3Regression"
+date: "April 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Set Manipulation
+
+## Cleaning up the environment by removing all the elements in env
+
+```{r}
+rm(list = ls())
+library(ggplot2)
+```
+
+## Importing the Data set csv file into R environment using read.csv and creating a data frame.
+
+```{r}
+
+crimedf <- read.csv(file = "CrimesCleansed.csv", stringsAsFactors = FALSE)
+```
+
+##PROBABILITY
+
+```{r}
+##Probablity on Type
+
+library(magrittr) 
+library(dplyr) 
+CrimesTypeProb <- crimedf %>% group_by(Primary.Type, time.tag, Community.Area, Location.Description) %>% dplyr:: summarise(count = n())
+
+CrimesTypeProb <- CrimesTypeProb[order(CrimesTypeProb$count,decreasing=TRUE),]
+top5crime <- CrimesTypeProb[1:5,]
+
+top5crime$prob <- top5crime$count/sum(CrimesTypeProb$count)
+
+##Probablity on Community
+
+CrimesCommunityProb <- crimedf %>% group_by(Community.Area) %>% dplyr:: summarise(count = n())
+
+CrimesCommunityProb <- CrimesCommunityProb[order(CrimesCommunityProb$count,decreasing=TRUE),]
+top5crimeCommunity <- CrimesCommunityProb[1:5,]
+
+top5crimeCommunity$prob <- top5crimeCommunity$count/sum(CrimesCommunityProb$count)
+
+##Probablity on Time
+
+CrimesTimeProb <- crimedf %>% group_by(time.tag) %>% dplyr:: summarise(count = n())
+
+CrimesCommunityProb <- CrimesTimeProb[order(CrimesTimeProb$count,decreasing=TRUE),]
+top5crimeTime <- CrimesTimeProb[1:4,]
+
+top5crimeTime$prob <- top5crimeTime$count/sum(CrimesTimeProb$count)
+
+
+```
+
+## Logistic regression model
+
+## Train a logistic regression model with 10-fold cross-validation
+```{r}
+library(caret)
+fitControl <- trainControl(method = "cv",number = 15)
+library(caret)
+set.seed(123)
+top5crime$theft<-ifelse(top5crime$Primary.Type =='THEFT',1,0)
+levels(top5crime$Primary.Type)
+levels(top5crime$time.tag)
+levels(top5crime$Community.Area)
+logit_fit <- train( Primary.Type~ ., data = top5crime[1:7],
+                   trControl = fitControl,
+                   method="glm", family=binomial(link='logit'))
+
+print(logit_fit)
+
+confusionMatrix(logit_fit)
+
+```
+
+## Train Support Vector Machine (Radial Basis Function Kernel) with 2-fold Cross-Validation
+```{r}
+set.seed(123)
+svmRadial_fit <- train(Primary.Type ~ ., data = top5crime[1:7],
+                       trControl = fitControl, method = "svmRadial",
+                       verbose=FALSE)
+
+print(svmRadial_fit)
+
+confusionMatrix(svmRadial_fit)
+```
+
+# Comments
+We are performing  predictive analysis to understand that the top crimes theft and naccotive will appear in which commnunities of chicago. We are using Logistic regression and SVm model to understand this. On analysis data we see that theft is having more probability of occuring in community 25. Our Response in predictive analytics is to understand what is the accuracy that theft will appear in this community area. Logistic regression gives an estimated of 80% accuracy on this analysis where as SVM gives 100% accuracy. On comparing SVM and Logistic, SVM works better for our research case analysis.

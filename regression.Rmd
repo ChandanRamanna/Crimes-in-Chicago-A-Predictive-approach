@@ -1,0 +1,208 @@
+---
+title: ' Crimes in Chicago - A Predictive Approach'
+author: By Rushiraj Nenuji,Nischitha Krishna, Chandan Ramanna, Santhosh Kumar Ravindran
+  and Yin Yang
+date: "March 5, 2017"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+subtitle: Milestone 2 - Data Analysis I
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Regression models
+
+## Loading data set
+
+```{r}
+
+crimedf <- read.csv(file = "Crimes_in_Chicago.csv", stringsAsFactors = FALSE)
+```
+
+## Cleansing data
+```{r}
+
+crimedf <- na.omit(crimedf)
+```
+
+## Convert Domestic into Dummy 1 for true and 0 for false
+
+
+```{r}
+crimedf$domestic_n <- ifelse (crimedf$Domestic == 'true',1,0)
+
+```
+
+# Regression models
+
+## Convert Domestic into Dummy 1 for true and 0 for false
+
+
+```{r}
+crimedf$domestic_n <- ifelse (crimedf$Domestic == 'true',1,0)
+
+```
+
+## Filtering 1000 records for past2 years.
+```{r}
+
+crimedf1 <- subset(crimedf,Year == 2017)
+
+library(magrittr)
+library(dplyr)
+Crimes_Type <- crimedf1 %>% group_by(Primary.Type) %>% dplyr:: summarise(arrest_count = n())  
+
+Crimes_Type <- data.frame (Crimes_Type)
+Crimes_Type<-Crimes_Type[order(-Crimes_Type$arrest_count),]
+Crimes_Type <- head(Crimes_Type,5)
+top10.crimes <- c(Crimes_Type$Primary.Type)
+
+crimedf2 <- subset(crimedf1, Primary.Type %in% top10.crimes)
+
+crimedf.new <- crimedf2[c(6:10,14,18)]
+crimedf_filtered <- head(crimedf.new,1000)
+```
+## Logistic regression model
+
+## Train a logistic regression model with 10-fold cross-validation
+```{r}
+library(caret)
+fitControl <- trainControl(method = "cv",number = 15)
+library(caret)
+set.seed(123)
+logit_fit <- train(Arrest ~ ., data = crimedf_filtered[1:7],
+                   trControl = fitControl,
+                   method="glm", family=binomial(link='logit'))
+
+print(logit_fit)
+
+confusionMatrix(logit_fit)
+```
+## Train Support Vector Machine (Radial Basis Function Kernel) with 2-fold Cross-Validation
+```{r}
+set.seed(123)
+svmRadial_fit <- train(Arrest ~ ., data = crimedf_filtered[1:7],
+                       trControl = fitControl, method = "svmRadial",
+                       verbose=FALSE)
+
+print(svmRadial_fit)
+
+confusionMatrix(svmRadial_fit)
+```
+
+## Train Gradient Boosted Machine (GBM)
+```{r}
+library(plyr)
+set.seed(123)
+gbm_fit <-train(Arrest ~ ., data = crimedf_filtered[1:7],
+                       trControl = fitControl, method = "gbm",
+                       verbose=FALSE)
+ 
+print(gbm_fit)
+
+confusionMatrix(gbm_fit)
+```
+## Compare Different Predictive Models
+
+
+## Data Partitioning
+
+```{r}
+crimedf_filtered$THEFT <- ifelse(crimedf_filtered$Primary.Type == 'THEFT', 1,0)
+crimedf_filtered$BATTERY <- ifelse(crimedf_filtered$Primary.Type == 'BATTERY', 1,0)
+crimedf_filtered$ASSAULT <- ifelse(crimedf_filtered$Primary.Type == 'ASSAULT', 1,0)
+crimedf_filtered$CRIMINAL.DAMAGE <- ifelse(crimedf_filtered$Primary.Type == 'CRIMINAL DAMAGE', 1,0)
+crimedf_filtered$OTHER.OFFENSE <- ifelse(crimedf_filtered$Primary.Type == 'OTHER OFFENSE', 1,0)
+crimedf_filtered$Arrest1 <- ifelse(crimedf_filtered$Arrest == 'true', 1,0)
+crimedf_filtered$Domestic1 <- ifelse(crimedf_filtered$Domestic == 'true', 1,0)
+crimedf_filtered$Year <- as.numeric(crimedf_filtered$Year)
+crimeneuraldf <- crimedf_filtered[c(7:14)]
+crimeneuraldf$Year <- ifelse(crimedf_filtered$Year == 2017,1,0)
+```
+
+##Structure 
+```{r}
+str(crimeneuraldf)
+```
+## We use a single 80/20% split.
+
+```{r}
+set.seed(1234)
+library(caret)
+trainIndex <- createDataPartition(crimeneuraldf$Arrest1, p = .8, list = FALSE)
+head(trainIndex)
+
+train_data <- crimeneuraldf[ trainIndex,]
+test_data  <- crimeneuraldf[-trainIndex,]
+```
+
+##Fit ANN Model on the Training Dataset
+
+We use the neuralnet R package for neural network modeling. For a list of prediction and classification models, refer to http://topepo.github.io/caret/available-models.html
+
+```{r}
+# Load the neuralnet package
+library('neuralnet')
+```
+
+After we load the neuralnet package, we can use the neuralnet() method to train the neural network model.
+
+The 'hidden' is used to set a vector of integers specifying the number of hidden neurons (vertices) in each layer.
+
+```{r}
+f <- as.formula(Arrest1 ~ Year+THEFT+BATTERY+ASSAULT+CRIMINAL.DAMAGE+OTHER.OFFENSE+Domestic1)
+```
+
+# Fit a neural network model with 2 hidden layers
+```{r}
+nn_fit_2 <- neuralnet(f, data = train_data, hidden = c(5,3), linear.output=TRUE)
+```
+
+Now, let's show the structure of the neural network trained.
+
+```{r}
+plot(nn_fit_2,rep="best", cex=0.8)
+```
+
+# Show results
+
+```{r}
+summary(nn_fit_2)
+
+```
+
+# Evaluate Predictive Performance of the ANN Model 
+
+## Computes the outputs of the ANN model on the test dataset
+
+Notice that the prediction result of the neuralnet is the probability of belonging to a class rather than the class.
+
+Hint:
+
+- Use the compute() method to calculate prediction;
+- In the compute() method, you need to NOT include the 'Personal_Loan' column, or else it will pop up an error of non-conformable arguments.  
+
+
+```{r}
+pred2_norm <- compute(nn_fit_2, test_data[-1])
+pred2_norm <- pred2_norm$net.result
+
+```
+
+
+```{r}
+test_data$pred <- ifelse(pred2_norm >= 0.2, 1, 0 )
+
+```
+
+## Create a confusion matrix to show the performance of the ANN model on the test set.
+
+
+```{r}
+confusionMatrix(test_data$Arrest1,test_data$pred)
+```
